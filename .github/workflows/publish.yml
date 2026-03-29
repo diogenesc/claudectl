@@ -26,4 +26,17 @@ jobs:
       - run: npm run build
       - run: npm test
 
+      - name: Exchange OIDC token for npm token
+        id: npm-token
+        run: |
+          oidc=$(curl -sS -H "Authorization: bearer $ACTIONS_ID_TOKEN_REQUEST_TOKEN" \
+            "${ACTIONS_ID_TOKEN_REQUEST_URL}&audience=https://registry.npmjs.org" | jq -r .value)
+          token=$(curl -sS -X POST "https://registry.npmjs.org/-/npm/v1/security/oidc/token" \
+            -H "Content-Type: application/json" \
+            -d "{\"token\":\"$oidc\"}" | jq -r .token)
+          echo "::add-mask::$token"
+          echo "token=$token" >> "$GITHUB_OUTPUT"
+
       - run: npm publish --provenance --access public
+        env:
+          NODE_AUTH_TOKEN: ${{ steps.npm-token.outputs.token }}
