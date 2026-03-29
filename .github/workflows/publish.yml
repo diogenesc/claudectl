@@ -16,7 +16,7 @@ jobs:
 
       - uses: actions/setup-node@v6
         with:
-          node-version: 22
+          node-version: 24
           registry-url: https://registry.npmjs.org
 
       - name: Set version from release tag
@@ -25,33 +25,4 @@ jobs:
       - run: npm ci
       - run: npm run build
       - run: npm test
-
-      - name: Exchange OIDC token for npm token
-        id: npm-token
-        run: |
-          oidc_response=$(curl -sS -H "Authorization: bearer $ACTIONS_ID_TOKEN_REQUEST_TOKEN" \
-            "${ACTIONS_ID_TOKEN_REQUEST_URL}&audience=https://registry.npmjs.org")
-          oidc=$(echo "$oidc_response" | jq -r .value)
-          if [ -z "$oidc" ] || [ "$oidc" = "null" ]; then
-            echo "::error::Failed to get OIDC token from GitHub"
-            echo "$oidc_response" | jq .
-            exit 1
-          fi
-          echo "Got OIDC token (length: ${#oidc})"
-
-          npm_response=$(curl -sS -X POST "https://registry.npmjs.org/-/npm/v1/security/oidc/token" \
-            -H "Content-Type: application/json" \
-            -d "{\"token\":\"$oidc\"}")
-          token=$(echo "$npm_response" | jq -r .token)
-          if [ -z "$token" ] || [ "$token" = "null" ]; then
-            echo "::error::Failed to exchange OIDC token for npm token"
-            echo "$npm_response" | jq .
-            exit 1
-          fi
-          echo "Got npm token (length: ${#token})"
-          echo "::add-mask::$token"
-          echo "token=$token" >> "$GITHUB_OUTPUT"
-
-      - run: npm publish --provenance --access public
-        env:
-          NODE_AUTH_TOKEN: ${{ steps.npm-token.outputs.token }}
+      - run: npm publish
