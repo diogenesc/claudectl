@@ -2,6 +2,9 @@
   "name": "@diogenesc/claudectl",
   "version": "0.1.0",
   "description": "Centralized permission management for Claude Code sessions",
+  "repository": {
+    "url": "https://github.com/diogenesc/claudectl"
+  },
   "type": "module",
   "bin": {
     "claudectl": "./dist/cli.js",
